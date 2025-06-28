@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <vector>
 
 #include "book_database.hpp"
 #include "comparators.hpp"
@@ -7,53 +8,72 @@
 
 using namespace bookdb;
 
-int main() {
-    //
-    // Ниже приведён пример работы `BookDatabase`.
-    //
-    //     - Обратите внимание, что в этой функции реализованы основные возможности, охватывающие как обязательные, так
-    //     и опциональные требования,
-    //       которые не обязательны к реализации для сдачи работы.
-    //     - Не забудьте перед созданием коммита вызвать 'run_clang_format.sh' для форматирования кода
-    //
+template <typename Key, typename Tp, typename Compare, typename KeyContainer, typename MappedContainer>
+struct std::formatter<std::flat_map<Key, Tp, Compare, KeyContainer, MappedContainer>> : std::formatter<std::string> {
+    auto format(const std::flat_map<Key, Tp, Compare, KeyContainer, MappedContainer> &map,
+                std::format_context &ctx) const {
+        static constexpr std::size_t reserve_per_entry = 512;
 
-    // Create a book database
+        std::string string;
+        string.reserve(map.size() * reserve_per_entry);
+
+        for (const auto &[key, value] : map) {
+            string += std::format("{}: {}\n", key, value);
+        }
+
+        return std::formatter<std::string>::format(string, ctx);
+    }
+};
+
+template <typename T, typename Allocator>
+struct std::formatter<std::vector<T, Allocator>> : std::formatter<std::string> {
+    auto format(const std::vector<T, Allocator> &vector, std::format_context &ctx) const {
+        static constexpr std::size_t reserve_per_entry = 512;
+
+        std::string string;
+        string.reserve(vector.size() * reserve_per_entry);
+
+        for (const auto &value : vector) {
+            string += std::format("{}\n", value);
+        }
+
+        return std::formatter<std::string>::format(string, ctx);
+    }
+};
+
+int main() {
     BookDatabase<std::vector<Book>> db;
 
-    /*
-
-    Код закомментирован, чтобы не приводить к ошибке компиляции
-
     // Add some books
-    db.EmplaceBack("1984", "George Orwell", 1949, Genre::SciFi, 4., 190);
-    db.EmplaceBack("Animal Farm", "George Orwell", 1945, Genre::Fiction, 4.4, 143);
-    db.EmplaceBack("The Great Gatsby", "F. Scott Fitzgerald", 1925, Genre::Fiction, 4.5, 120);
-    db.EmplaceBack("To Kill a Mockingbird", "Harper Lee", 1960, Genre::Fiction, 4.8, 156);
-    db.EmplaceBack("Pride and Prejudice", "Jane Austen", 1813, Genre::Fiction, 4.7, 178);
-    db.EmplaceBack("The Catcher in the Rye", "J.D. Salinger", 1951, Genre::Fiction, 4.3, 112);
-    db.EmplaceBack("Brave New World", "Aldous Huxley", 1932, Genre::SciFi, 4.5, 98);
-    db.EmplaceBack("Jane Eyre", "Charlotte Brontë", 1847, Genre::Fiction, 4.6, 110);
-    db.EmplaceBack("The Hobbit", "J.R.R. Tolkien", 1937, Genre::Fiction, 4.9, 203);
-    db.EmplaceBack("Lord of the Flies", "William Golding", 1954, Genre::Fiction, 4.2, 89);
-    std::print("Books: {}\n\n", db);
+    db.EmplaceBack("1984", "George Orwell", 1949, Book::Genre::SciFi, 4., 190);
+    db.EmplaceBack("Animal Farm", "George Orwell", 1945, Book::Genre::Fiction, 4.4, 143);
+    db.EmplaceBack("The Great Gatsby", "F. Scott Fitzgerald", 1925, Book::Genre::Fiction, 4.5, 120);
+    db.EmplaceBack("To Kill a Mockingbird", "Harper Lee", 1960, Book::Genre::Fiction, 4.8, 156);
+    db.EmplaceBack("Pride and Prejudice", "Jane Austen", 1813, Book::Genre::Fiction, 4.7, 178);
+    db.EmplaceBack("The Catcher in the Rye", "J.D. Salinger", 1951, Book::Genre::Fiction, 4.3, 112);
+    db.EmplaceBack("Brave New World", "Aldous Huxley", 1932, Book::Genre::SciFi, 4.5, 98);
+    db.EmplaceBack("Jane Eyre", "Charlotte Brontë", 1847, Book::Genre::Fiction, 4.6, 110);
+    db.EmplaceBack("The Hobbit", "J.R.R. Tolkien", 1937, Book::Genre::Fiction, 4.9, 203);
+    db.EmplaceBack("Lord of the Flies", "William Golding", 1954, Book::Genre::Fiction, 4.2, 89);
+    std::print("Books:\n{}\n\n", db);
 
     // Sorts
     std::sort(db.begin(), db.end(), comp::LessByAuthor{});
-    std::print("Books sorted by author: {}\n\n==================\n", db);
+    std::print("Books sorted by author:\n{}\n\n==================\n", db);
 
-    std::sort(db.begin(), db.end(), comp::LessByPopularity{});
-    std::print("Books sorted by popularity: {}\n\n==================\n", db);
+    std::sort(db.begin(), db.end(), comp::LessByReadCount{});
+    std::print("Books sorted by popularity:\n{}\n\n==================\n", db);
 
     // Author histogram
     auto histogram = buildAuthorHistogramFlat(db);
-    std::print("Author histogram: {}", histogram);
+    std::print("Author histogram:\n{}", histogram);
 
     // Ratings
     auto genreRatings = calculateGenreRatings(db.begin(), db.end());
-    std::print("\n\nAverage ratings by genres: {}\n", genreRatings);
+    std::print("\n\nAverage ratings by genres:\n{}\n", genreRatings);
 
     auto avrRating = calculateAverageRating(db);
-    std::print("Average books rating in library: {}\n", avrRating);
+    std::print("Average books rating in library:\n{}\n", avrRating);
 
     // Filters
     auto filtered = filterBooks(db.begin(), db.end(), all_of(YearBetween(1900, 1999), RatingAbove(4.5)));
@@ -69,7 +89,6 @@ int main() {
     if (orwellBookIt != db.end()) {
         std::print("\n\nTransparent lookup by authors. Found Orwell's book: {}\n", *orwellBookIt);
     }
-    */
 
     return 0;
 }
